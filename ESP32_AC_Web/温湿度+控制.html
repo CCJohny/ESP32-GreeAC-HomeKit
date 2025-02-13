@@ -1,0 +1,102 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="mobile-web-app-capable" content="yes">
+    <title>格力空调控制</title>
+    <style>
+        body {font-family: Arial, sans-serif; margin: 0; padding: 0; box-sizing: border-box; max-width: 1500px; margin: auto;}
+        .container {column-count: 1; column-gap: 20px; padding: 20px;}
+        .card {background-color: #f7f7f7; border-radius: 15px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); margin: 10px 0; padding: 20px; display: inline-block; width: 100%; box-sizing: border-box; align-items: flex-start;}
+        .capsule-button {border: none; color: white; padding: 10px 20px; text-align: center; text-decoration: none; display: inline-block; font-size: 16px; margin: 5px 2px; cursor: pointer; border-radius: 50px;}
+        .capsule-button.on-off {background-color: #4CAF50;}
+        .capsule-button.speed {background-color: #FF5733;}
+        .capsule-button.mode {background-color: #33C1FF;}
+        .capsule-button.function {background-color: #FFC300;}
+        .capsule-button.function.off {background-color: #FFF9E5; color: #333333;}  /* 使用浅黄潘通色 */
+        .temp-slider {width: 100%; height: 40px;}
+        @media screen and (max-width: 599px) {.container {column-count: 1; padding: 10px;} .card {margin: 5px 0; padding: 10px;} .capsule-button {padding: 8px 16px; font-size: 14px;} .temp-slider {height: 30px;}}
+        @media screen and (min-width: 600px) and (max-width: 899px) {.container {column-count: 2;}}
+        @media screen and (min-width: 900px) {.container {column-count: 3;}}
+        html {font-family: 'Open Sans', sans-serif; display: block; margin: 0px auto; text-align: center; color: #333333;}
+        body {margin-top: 50px;}
+        h1 {margin: 50px auto 30px;}
+        .side-by-side {display: inline-block; vertical-align: middle; position: relative; white-space: nowrap;}
+        .humidity-text, .temperature-text {font-weight: 400; font-size: 19px; width: 160px; text-align: center; white-space: nowrap;}
+        .humidity, .temperature {font-weight: 300; font-size: 60px; text-align: center; white-space: nowrap;}
+        .humidity {color: #3498db;}
+        .temperature {color: #f39c12;}
+        .data {padding: 10px;}
+        .fixed-width {width: 100px; display: inline-block; text-align: center; white-space: nowrap;}
+        .env-row {display: flex; justify-content: space-around; align-items: center;}
+    </style>
+    <script>
+        function updateTemp(value) {
+            document.getElementById('tempValue').innerText = value + '°C';
+            fetch('/temp?value=' + value);
+        }
+        function updateData() {
+            fetch('/api')
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('temperature').innerText = data.Temperature.toFixed(1) + '°C';
+                    document.getElementById('humidity').innerText = data.Humidity.toFixed(1) + '%';
+                }).catch(error => console.error('Error fetching data:', error));
+        }
+        function toggleFunction(button, functionName) {
+            var isActive = button.classList.contains('off');
+            button.classList.toggle('off', !isActive);
+            var url = isActive ? '/' + functionName + '/on' : '/' + functionName + '/off';
+            fetch(url);
+        }
+        setInterval(updateData, 2000);  // 每两秒刷新一次数据
+    </script>
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <h1>环境监测</h1>
+            <div class="env-row">
+                <div>
+                    <div class="temperature-text">温度</div>
+                    <div class="temperature" id="temperature">Null°C</div>
+                </div>
+                <div>
+                    <div class="humidity-text">湿度</div>
+                    <div class="humidity" id="humidity">Null%</div>
+                </div>
+            </div>
+        </div>
+        <div class="card">
+            <h1>格力空调控制</h1>
+            <button class="capsule-button on-off" onclick="fetch('/on')">开机</button>
+            <button class="capsule-button on-off" onclick="fetch('/off')">关机</button>
+            <h2>温度 <span id="tempValue">25°C</span></h2>
+            <input type="range" min="16" max="30" value="25" id="tempSlider" class="temp-slider" oninput="updateTemp(this.value)">
+        </div>
+        <div class="card">
+            <h2>风速</h2>
+            <button class="capsule-button speed" onclick="fetch('/speed/0')">自动</button>
+            <button class="capsule-button speed" onclick="fetch('/speed/1')">低</button>
+            <button class="capsule-button speed" onclick="fetch('/speed/2')">中</button>
+            <button class="capsule-button speed" onclick="fetch('/speed/3')">高</button>
+        </div>
+        <div class="card">
+            <h2>模式</h2>
+            <button class="capsule-button mode" onclick="fetch('/cool')">制冷</button>
+            <button class="capsule-button mode" onclick="fetch('/heat')">制热</button>
+            <button class="capsule-button mode" onclick="fetch('/dry')">除湿</button>
+            <button class="capsule-button mode" onclick="fetch('/fan')">风扇</button>
+            <button class="capsule-button mode" onclick="fetch('/auto')">自动</button>
+        </div>
+        <div class="card">
+            <h2>其他功能</h2>
+            <button class="capsule-button function off" onclick="toggleFunction(this, 'swing')">扫风</button>
+            <button class="capsule-button function off" onclick="toggleFunction(this, 'sleep')">睡眠</button>
+            <button class="capsule-button function off" onclick="toggleFunction(this, 'light')">数显</button>
+            <button class="capsule-button function off" onclick="toggleFunction(this, 'turbo')">强劲</button>
+        </div>
+    </div>
+</body>
+</html>
